@@ -6,7 +6,7 @@ import { AuthError, ConnectBox, ConnectItem } from './styles'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 
-const Register = () => {
+const ConnectCalendar = () => {
   const session = useSession()
   const router = useRouter()
 
@@ -61,4 +61,4 @@ const Register = () => {
   )
 }
 
-export default Register
+export default ConnectCalendar
