@@ -22,6 +22,8 @@ import { z } from 'zod'
 import { getWeekDay } from '@/utils/getWeekDay'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { convertStringToMinutes } from '@/utils/convertStringToMinutes'
+import { api } from '@/lib/axios'
+import { useRouter } from 'next/router'
 
 const intervalSchema = z.object({
   weekDay: z.number().min(0).max(6),
@@ -90,13 +92,18 @@ export default function TimeIntervals() {
     name: 'intervals',
   })
 
+  const router = useRouter()
+
   const intervals = watch('intervals')
 
   // This "data: any" was needed because of an issue with react-hook-form and zod
   // This issue has been resolved, but a latest version has not yet been released
-  const handleSetTimeIntervals = (data: any) => {
-    const formData = data as TimeIntervalsFormOutput
-    console.log(formData)
+  const handleSetTimeIntervals = async (data: any) => {
+    const { intervals } = data as TimeIntervalsFormOutput
+
+    await api.post('/users/time-intervals', { intervals })
+
+    await router.push(`/register/update-profile`)
   }
 
   return (
