@@ -10,6 +10,9 @@ import {
 import { getShortWeekDays } from '@/utils/getWeekDay'
 import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
+import { api } from '@/lib/axios'
+import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 
 interface CalendarWeek {
   week: number
@@ -26,10 +29,34 @@ interface CalendarProps {
   onDateSelected: (date: Date) => void
 }
 
+interface BlockedDates {
+  blockedWeekDays: number[]
+}
+
 export const Calendar = ({ selectedDate, onDateSelected }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(() => {
     return dayjs().set('date', 1)
   })
+
+  const router = useRouter()
+  const username = String(router.query.username)
+
+  const currentYearDate = currentDate.get('year')
+  const currentMonthDate = currentDate.get('month')
+
+  const { data: blockedDates } = useQuery<BlockedDates>(
+    ['blocked-dates', currentYearDate, currentMonthDate],
+    async () => {
+      const response = await api.get(`/users/${username}/blocked-dates`, {
+        params: {
+          year: currentYearDate,
+          month: currentMonthDate + 1,
+        },
+      })
+
+      return response.data
+    },
+  )
 
   const handlePreviousMonth = () => {
     const previousMount = currentDate.subtract(1, 'month')
@@ -41,6 +68,10 @@ export const Calendar = ({ selectedDate, onDateSelected }: CalendarProps) => {
   }
 
   const calendarWeeks = useMemo(() => {
+    if (!blockedDates) {
+      return []
+    }
+
     const daysInMonthArray = Array.from({
       length: currentDate.daysInMonth(),
     }).map((_, i) => {
@@ -76,7 +107,9 @@ export const Calendar = ({ selectedDate, onDateSelected }: CalendarProps) => {
       ...daysInMonthArray.map((date) => {
         return {
           date,
-          disabled: date.endOf('day').isBefore(new Date()),
+          disabled:
+            date.endOf('day').isBefore(new Date()) ||
+            blockedDates.blockedWeekDays.includes(date.get('day')),
         }
       }),
       ...nextMonthFillArray.map((date) => {
@@ -103,7 +136,7 @@ export const Calendar = ({ selectedDate, onDateSelected }: CalendarProps) => {
     )
 
     return calendarWeeks
-  }, [currentDate])
+  }, [currentDate, blockedDates])
 
   const currentMonth = currentDate.format('MMMM')
   const currentYear = currentDate.format('YYYY')
