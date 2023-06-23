@@ -30,7 +30,7 @@ export const Home = () => {
             height={400}
             quality={100}
             priority
-            alt="Calendário simbolizando aplicação em funcionamento"
+            alt="Calendário simbolizando a aplicação em funcionamento"
           />
         </Preview>
       </Container>
